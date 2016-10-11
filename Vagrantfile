@@ -15,7 +15,7 @@ Vagrant.configure('2') do |config|
     master.vm.synced_folder './code', '/puppet_code', type: 'rsync'
 
     master.vm.provider 'virtualbox' do |vbox|
-      vbox.name    = 'vagrant-puppetmaster'
+      vbox.name    = 'vagrant-puppet-master'
       vbox.cpus    = 2
       vbox.memory  = 4096
     end

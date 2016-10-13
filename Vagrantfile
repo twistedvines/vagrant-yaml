@@ -12,7 +12,7 @@ Vagrant.configure('2') do |config|
   BOX_CONFIG.each do |box_name, box_properties|
     no_of_instances = box_properties[:instances] || 1
 
-    (0..no_of_instances).each do |instance_id|
+    (0...no_of_instances).each do |instance_id|
       if no_of_instances > 1
         relative_hostname = box_properties[:network_config][:hostname].split('.').first
         fqdn = box_properties[:network_config][:hostname].gsub(

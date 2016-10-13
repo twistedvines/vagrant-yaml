@@ -1,0 +1,99 @@
+---
+centos-master:
+  :box:
+    :name: 'centos/6'
+  :network_config:
+    :hostname: 'vagrant-puppetmaster.vagrant.local'
+    :networks:
+    - :private: true
+      :type: 'dhcp'
+  :provisioning:
+  - :type: 'file'
+    :source: './files/tmp/pe.conf'
+    :destination: '/tmp/pe.conf'
+
+  - :type: 'shell'
+    :privileged: true
+    :path: './scripts/configure_root_user.sh'
+
+  - :type: 'shell'
+    :privileged: true
+    :path: './scripts/configure_sshd.sh'
+
+
+  - :type: 'shell'
+    :privileged: true
+    :path: './scripts/install_puppet_enterprise.sh'
+    
+  :ssh_config:
+    :insert_key: false
+  :synced_folders:
+  - :local_path: './puppet-labenvironment'
+    :remote_path: '/puppet_code'
+    :type: 'rsync'
+  :providers:
+    :virtualbox:
+      :name: 'vagrant-puppet-master'
+      :cores: 2
+      :memory: 4096
+
+centos-agent:
+  :box:
+    :name: 'centos/6'
+  :network_config:
+    :hostname: 'vagrant-centosagent.vagrant.local'
+    :networks:
+    - :private: true
+      :type: 'dhcp'
+  :provisioning:
+  
+  - :type: 'shell'
+    :privileged: true
+    :path: './scripts/configure_root_user.sh'
+
+  - :type: 'shell'
+    :privileged: true
+    :path: './scripts/configure_sshd.sh'
+
+  - :type: 'shell'
+    :privileged: true
+    :path: './scripts/install_puppet.sh'
+
+  :ssh_config:
+    :insert_key: false
+  :providers:
+    :virtualbox:
+      :name: 'vagrant-puppet-centosagent'
+      :cores: 1
+      :memory: 1024
+
+debian-agent:
+  :box:
+    :name: 'debian/jessie64'
+  :network_config:
+    :hostname: 'vagrant-debianagent.vagrant.local'
+    :networks:
+    - :private: true
+      :type: 'dhcp'
+
+  :provisioning:
+  
+  - :type: 'shell'
+    :privileged: true
+    :path: './scripts/configure_root_user.sh'
+
+  - :type: 'shell'
+    :privileged: true
+    :path: './scripts/configure_sshd.sh'
+
+  - :type: 'shell'
+    :privileged: true
+    :path: './scripts/install_puppet.sh'
+ 
+  :ssh_config:
+    :insert_key: false
+  :providers:
+    :virtualbox:
+      :name: 'vagrant-puppet-debianagent'
+      :cores: 1
+      :memory: 1024

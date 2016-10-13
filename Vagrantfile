@@ -1,54 +1,90 @@
 # Vagrant dev box for a puppet master.
+require 'yaml'
+
+vagrantfile_dir = File.absolute_path(File.dirname(__FILE__))
+
+BOX_CONFIG = YAML.load_file("#{vagrantfile_dir}/config/boxes.yaml")
 
 Vagrant.configure('2') do |config|
   config.landrush.enabled = true
   config.landrush.tld = 'vagrant.local'
   config.landrush.host_interface_excludes = [/lo[0-9]*/]
-  config.vm.define 'centos-master' do |master|
+  BOX_CONFIG.each do |box_name, box_properties|
+    config.vm.define box_name do |defined_box|
+      defined_box.vm.box = box_properties[:box][:name]
+      defined_box.vm.hostname = box_properties[:network_config][:hostname]
 
-    master.vm.box = 'centos/6'
-    master.vm.hostname = 'vagrant-puppetmaster.vagrant.local'
-    master.vm.network 'private_network', type: 'dhcp'
-    master.vm.provision 'file', source: "./files/tmp/pe.conf", destination: "/tmp/pe.conf"
-    master.vm.provision 'shell', privileged: true, path: 'scripts/install_puppet_enterprise.sh'
-    master.ssh.insert_key = false
-    master.vm.synced_folder './puppet-labenvironment', '/puppet_code', type: 'rsync'
+      if box_properties[:synced_folders]
 
-    master.vm.provider 'virtualbox' do |vbox|
-      vbox.name    = 'vagrant-puppet-master'
-      vbox.cpus    = 2
-      vbox.memory  = 4096
+        box_properties[:synced_folders].each do |synced_folder|
+          defined_box.vm.synced_folder(
+            synced_folder[:local_path],
+            synced_folder[:remote_path],
+            type: synced_folder[:type]
+          )
+        end
+
+      end
+
+      box_properties[:network_config][:networks].each do |network|
+        privacy = network[:private] ? 'private_network' : 'public_network'
+        defined_box.vm.network privacy, type: network[:type]
+      end
+
+      if box_properties[:ssh_config]
+
+        if box_properties[:ssh_config][:insert_key]
+          defined_box.ssh.insert_key = box_properties[:ssh_config][:insert_key]
+        end
+      end
+
+      if box_properties[:provisioning]
+        box_properties[:provisioning].each do |provisioner|
+          case provisioner[:type]
+          when 'shell'
+            provision_shell(defined_box.vm, provisioner)
+          when 'file'
+            provision_file(defined_box.vm, provisioner)
+          end 
+        end
+      end
+
+      box_properties[:providers].each do |provider_name, provider_properties|
+        case provider_name
+        when :virtualbox
+          defined_box.vm.provider 'virtualbox' do |vbox|
+            configure_virtualbox_provider(vbox, provider_properties)
+          end
+        end
+      end
     end
   end
 
-  config.vm.define 'centos-agent' do |centos|
-    centos.vm.box = 'centos/6'
-    centos.vm.hostname = 'vagrant-centosagent.vagrant.local'
-    centos.vm.network 'private_network', type: 'dhcp'
-    centos.vm.provision 'shell', privileged: true, path: 'scripts/install_puppet.sh'
-    centos.ssh.insert_key = false
-    centos.vm.provider 'virtualbox' do |vbox|
-      vbox.memory = 1024
-      vbox.cpus = 1
-      vbox.name = 'vagrant-puppet-centosagent'
-    end
-  end
+end
 
-  config.vm.define 'debian-agent' do |debian|
+# helper methods
+def configure_virtualbox_provider(provider_handle, provider_properties)
+  provider_handle.memory = provider_properties[:memory]
+  provider_handle.cpus = provider_properties[:cores]
+  provider_handle.name = provider_properties[:name]
+end
 
-    debian.vm.box = 'debian/jessie64'
-    debian.vm.hostname = 'vagrant-debianagent.vagrant.local'
-    debian.vm.network 'private_network', type: 'dhcp'
-    debian.vm.provision 'shell', privileged: true, path: 'scripts/install_puppet.sh'
-    debian.ssh.insert_key = false
+def provision_shell(provisioner_handle, shell_properties)
 
-    debian.vm.provider 'virtualbox' do |vbox|
-      vbox.memory = 1024
-      vbox.cpus = 1
-      vbox.name = 'vagrant-puppet-debianagent'
-    end
-  end
+  provisioner_handle.provision(
+    'shell',
+    privileged: shell_properties[:privileged],
+    path: shell_properties[:path]
+  )
 
-  config.vm.provision 'shell', privileged: true, path: 'scripts/configure_root_user.sh'
-  config.vm.provision 'shell', privileged: true, path: 'scripts/configure_sshd.sh'
+end
+
+def provision_file(provisioner_handle, shell_properties)
+
+  provisioner_handle.provision(
+    'file',
+    source: shell_properties[:source],
+    destination: shell_properties[:destination]
+  )
+
 end

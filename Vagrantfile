@@ -12,7 +12,7 @@ Vagrant.configure('2') do |config|
     master.vm.provision 'file', source: "./files/tmp/pe.conf", destination: "/tmp/pe.conf"
     master.vm.provision 'shell', privileged: true, path: 'scripts/install_puppet_enterprise.sh'
     master.ssh.insert_key = false
-    master.vm.synced_folder './code', '/puppet_code', type: 'rsync'
+    master.vm.synced_folder './puppet-labenvironment', '/puppet_code', type: 'rsync'
 
     master.vm.provider 'virtualbox' do |vbox|
       vbox.name    = 'vagrant-puppet-master'

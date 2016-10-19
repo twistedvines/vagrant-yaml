@@ -30,7 +30,6 @@ centos-master:
   :synced_folders:
   - :local_path: './puppet-labenvironment'
     :remote_path: '/puppet_code'
-    :type: 'rsync'
   :providers:
     :virtualbox:
       :name: 'vagrant-puppet-master'
@@ -46,7 +45,7 @@ centos-agent:
     - :private: true
       :type: 'dhcp'
   :provisioning:
-  
+
   - :type: 'shell'
     :privileged: true
     :path: './scripts/configure_root_user.sh'
@@ -77,7 +76,7 @@ debian-agent:
       :type: 'dhcp'
 
   :provisioning:
-  
+
   - :type: 'shell'
     :privileged: true
     :path: './scripts/configure_root_user.sh'
@@ -95,5 +94,36 @@ debian-agent:
   :providers:
     :virtualbox:
       :name: 'vagrant-puppet-debianagent'
+      :cores: 1
+      :memory: 1024
+
+ubuntu-agent:
+  :box:
+    :name: 'ubuntu/trusty64'
+  :network_config:
+    :hostname: 'vagrant-ubuntuagent.vagrant.local'
+    :networks:
+    - :private: true
+      :type: 'dhcp'
+
+  :provisioning:
+
+  - :type: 'shell'
+    :privileged: true
+    :path: './scripts/configure_root_user.sh'
+
+  - :type: 'shell'
+    :privileged: true
+    :path: './scripts/configure_sshd.sh'
+
+  - :type: 'shell'
+    :privileged: true
+    :path: './scripts/install_puppet.sh'
+
+  :ssh_config:
+    :insert_key: false
+  :providers:
+    :virtualbox:
+      :name: 'vagrant-puppet-ubuntuagent'
       :cores: 1
       :memory: 1024

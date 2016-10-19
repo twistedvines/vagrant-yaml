@@ -26,17 +26,33 @@ Vagrant.configure('2') do |config|
       end
 
       config.vm.define new_box_name do |defined_box|
+        if box_properties[:providers][:virtualbox]
+          unless box_properties[:providers][:virtualbox][:guest_additions]
+            # Disable guest additions install by default
+            defined_box.vbguest.no_install = true
+          else
+            defined_box.vbguest.auto_update = box_properties[:providers][:virtualbox][:guest_additions]
+          end
+        end
         defined_box.vm.box = box_properties[:box][:name]
         defined_box.vm.hostname = fqdn
 
         if box_properties[:synced_folders]
 
           box_properties[:synced_folders].each do |synced_folder|
-            defined_box.vm.synced_folder(
-              synced_folder[:local_path],
-              synced_folder[:remote_path],
-              type: synced_folder[:type]
-            )
+            # If the type isn't specified, we default to using guest customisation...
+            if synced_folder[:type]
+              defined_box.vm.synced_folder(
+                synced_folder[:local_path],
+                synced_folder[:remote_path],
+                type: synced_folder[:type]
+              )
+            else
+              defined_box.vm.synced_folder(
+                synced_folder[:local_path],
+                synced_folder[:remote_path]
+              )
+            end
           end
 
         end

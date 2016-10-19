@@ -1,3 +1,11 @@
+# Required plugins:
+# vagrant-vbguest:
+  # Necessary for installing Virtualbox Guest Additions.
+  # Guest additions are required for mounting the puppet_code directory for write-down from the guest.
+# landrush:
+  # Necessary for dynamic DNS on the NAT Network.
+  # Allows the VMs to reference each other via hostname.
+
 # Vagrant dev box for a puppet master.
 require 'yaml'
 

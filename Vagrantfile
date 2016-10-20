@@ -65,6 +65,16 @@ Vagrant.configure('2') do |config|
 
         end
 
+        if box_properties[:network_config][:dns]
+          dns_config = box_properties[:network_config][:dns]
+          if dns_config[:servers]
+            dns_config[:servers].each do |server|
+              puts "adding #{server} to DNS servers"
+              defined_box.landrush.upstream server
+            end
+          end
+        end
+
         box_properties[:network_config][:networks].each do |network|
           privacy = network[:private] ? 'private_network' : 'public_network'
           defined_box.vm.network privacy, type: network[:type]

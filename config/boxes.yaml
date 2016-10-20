@@ -44,6 +44,10 @@ centos-agent:
     :networks:
     - :private: true
       :type: 'dhcp'
+    :dns:
+      :servers:
+      - '8.8.8.8'
+      - '8.8.4.4'
   :provisioning:
 
   - :type: 'shell'

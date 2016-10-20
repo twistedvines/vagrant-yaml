@@ -35,6 +35,7 @@ centos-master:
       :name: 'vagrant-puppet-master'
       :cores: 2
       :memory: 4096
+      :guest_additions: true
 
 centos-agent:
   :box:

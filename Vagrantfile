@@ -69,7 +69,6 @@ Vagrant.configure('2') do |config|
           dns_config = box_properties[:network_config][:dns]
           if dns_config[:servers]
             dns_config[:servers].each do |server|
-              puts "adding #{server} to DNS servers"
               defined_box.landrush.upstream server
             end
           end

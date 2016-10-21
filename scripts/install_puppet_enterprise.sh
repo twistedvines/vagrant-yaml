@@ -1,16 +1,26 @@
 # Set commonly-used variables
 PUPPET_BIN=/opt/puppetlabs/bin/puppet
 
+DISTRIBUTION=$1
+ARCH=$2
+RELEASE=$3
+VERSION=$4
+PE_TGZ_PATH=$5
+
 function check_for_errors(){
-  if [ "$?" -ne "0" ]; then
-    echo "Something went wrong, \$? is $?"
-    exit $?
+  EXIT_CODE=$?
+  if [ "$EXIT_CODE" -ne "0" ]; then
+    echo "Something went wrong, \$? is $EXIT_CODE"
+    exit $EXIT_CODE
   fi
 }
 
-echo "Downloading tarball for centOS 6..."
 (
-  curl -sL -o pe-latest.tgz 'https://pm.puppetlabs.com/cgi-bin/download.cgi?ver=latest&dist=el&arch=x86_64&rel=6' > /dev/null 2>&1
+  if [ ! -f "$PE_TGZ_PATH" ]; then
+    echo "Puppet Enterprise Installer ($PE_TGZ_PATH) hasn't been uploaded by host, downloading now..."
+    curl -sL -o "$PE_TGZ_PATH" "https://pm.puppetlabs.com/cgi-bin/down.cgi?ver=${VERSION}&dist=${DISTRIBUTION}&arch=${ARCH}&rel=${RELEASE}"
+  fi
+  cd /tmp
   tar zxf pe-latest.tgz > /dev/null 2>&1
   rm pe-latest.tgz
 )
@@ -18,7 +28,7 @@ echo "Downloading tarball for centOS 6..."
 check_for_errors
 
 echo "Installing Puppet Enterprise..."
-./puppet-enterprise-2016.2.1-el-6-x86_64/puppet-enterprise-installer -c /tmp/pe.conf > /dev/null
+/tmp/puppet-enterprise-${VERSION}-${DISTRIBUTION}-${RELEASE}-${ARCH}/puppet-enterprise-installer -c /tmp/pe.conf > /dev/null
 
 check_for_errors
 
@@ -54,9 +64,7 @@ echo "*.vagrant.local" >> /etc/puppetlabs/puppet/autosign.conf
 
 check_for_errors
 
-echo "Running a puppet agent test..."
-/opt/puppetlabs/bin/puppet agent -t > /dev/null
-
-check_for_errors
+echo "Running a puppet agent test... (Output available at /tmp/puppet_agent_test.log on the guest)"
+$PUPPET_BIN agent -t > /tmp/puppet_agent_test.log
 
 echo "Puppet installation and configuration is complete."

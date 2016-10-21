@@ -6,14 +6,26 @@
   # Necessary for dynamic DNS on the NAT Network.
   # Allows the VMs to reference each other via hostname.
 
+# add lib directory to $LOAD_PATH
+$:.unshift(File.expand_path('./lib'))
+
 # Vagrant dev box for a puppet master.
 require 'yaml'
+require 'local'
 
 vagrantfile_dir = File.absolute_path(File.dirname(__FILE__))
 
 BOX_CONFIG = YAML.load_file("#{vagrantfile_dir}/config/boxes.yaml")
 
 Vagrant.configure('2') do |config|
+
+  execution_handler = ::Local::Execution.new(
+    vagrantfile_dir,
+    "#{vagrantfile_dir}/config/local_scripts.yaml",
+  )
+
+  execution_handler.execute_scripts_before
+
   config.landrush.enabled = true
   config.landrush.tld = 'vagrant.local'
   config.landrush.host_interface_excludes = [/lo[0-9]*/]
@@ -119,12 +131,27 @@ def configure_virtualbox_provider(provider_handle, provider_properties, name)
 end
 
 def provision_shell(provisioner_handle, shell_properties)
-
-  provisioner_handle.provision(
-    'shell',
-    privileged: shell_properties[:privileged],
-    path: shell_properties[:path]
-  )
+  if shell_properties[:args]
+    # limitation of Vagrant - we need to push the script up and call it...
+    file_properties = {
+      source: shell_properties[:path],
+      destination: "/tmp/#{shell_properties[:path].split('/').last}"
+    }
+    provision_file(provisioner_handle, file_properties)
+    provisioner_handle.provision(
+      'shell',
+      privileged: shell_properties[:privileged]
+    ) do |s|
+      s.inline = "bash #{file_properties[:destination]} " \
+        "#{shell_properties[:args].join(' ')}"
+    end
+  else
+    provisioner_handle.provision(
+      'shell',
+      privileged: shell_properties[:privileged],
+      path: shell_properties[:path]
+    )
+  end
 
 end
 

@@ -7,10 +7,17 @@ centos-master:
     :networks:
     - :private: true
       :type: 'dhcp'
+    :dns:
+      :servers:
+      - '208.67.222.222'
   :provisioning:
   - :type: 'file'
     :source: './files/tmp/pe.conf'
     :destination: '/tmp/pe.conf'
+
+  - :type: 'file'
+    :source: './files/tmp/pe-latest.tgz'
+    :destination: &pe_installer_tar '/tmp/pe-latest.tgz'
 
   - :type: 'shell'
     :privileged: true
@@ -24,6 +31,12 @@ centos-master:
   - :type: 'shell'
     :privileged: true
     :path: './scripts/install_puppet_enterprise.sh'
+    :args:
+    - 'el'
+    - 'x86_64'
+    - '6'
+    - '2016.4.0'
+    - *pe_installer_tar
     
   :ssh_config:
     :insert_key: false
@@ -38,6 +51,7 @@ centos-master:
       :guest_additions: true
 
 centos-agent:
+  :instances: 1
   :box:
     :name: 'centos/6'
   :network_config:
@@ -47,8 +61,8 @@ centos-agent:
       :type: 'dhcp'
     :dns:
       :servers:
-      - '8.8.8.8'
-      - '8.8.4.4'
+      - '208.67.222.222'
+
   :provisioning:
 
   - :type: 'shell'
@@ -72,6 +86,7 @@ centos-agent:
       :memory: 1024
 
 debian-agent:
+  :instances: 1
   :box:
     :name: 'debian/jessie64'
   :network_config:
@@ -79,6 +94,10 @@ debian-agent:
     :networks:
     - :private: true
       :type: 'dhcp'
+    :dns:
+      :servers:
+      - '208.67.222.222'
+
 
   :provisioning:
 
@@ -103,6 +122,7 @@ debian-agent:
       :memory: 1024
 
 ubuntu-agent:
+  :instances: 1
   :box:
     :name: 'ubuntu/trusty64'
   :network_config:
@@ -110,6 +130,10 @@ ubuntu-agent:
     :networks:
     - :private: true
       :type: 'dhcp'
+    :dns:
+      :servers:
+      - '208.67.222.222'
+
 
   :provisioning:
 

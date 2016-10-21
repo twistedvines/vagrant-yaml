@@ -1,0 +1,11 @@
+---
+
+- :type: :script
+  :location: './scripts/local/download_pe_tarball.sh'
+  :runtime: :before
+  :args:
+  - "files/tmp/pe-latest.tgz"
+  - "el"
+  - "x86_64"
+  - "6"
+  - "2016.4.0"

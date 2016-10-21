@@ -46,4 +46,6 @@ To run this environment, you will need:
 
   ## Notes
 
+**You cannot use the local-provisioning feature if you are running Windows - Cygwin may work but this is untested. I'd recommend using a *real* operating system ;)**
+
   Enjoy this environment! it was fun to Vagrant-ise. If you can think of any improvements, feel free to fork this repository off and work on them to submit for a merge request - or, alternatively, you can raise an issue.

@@ -101,7 +101,7 @@ Vagrant.configure('2') do |config|
           case provider_name
           when :virtualbox
             defined_box.vm.provider 'virtualbox' do |vbox|
-              configure_virtualbox_provider(vbox, provider_properties)
+              configure_virtualbox_provider(vbox, provider_properties, new_box_name)
             end
           end
         end
@@ -112,10 +112,10 @@ Vagrant.configure('2') do |config|
 end
 
 # helper methods
-def configure_virtualbox_provider(provider_handle, provider_properties)
+def configure_virtualbox_provider(provider_handle, provider_properties, name)
   provider_handle.memory = provider_properties[:memory]
   provider_handle.cpus = provider_properties[:cores]
-  provider_handle.name = provider_properties[:name]
+  provider_handle.name = name
 end
 
 def provision_shell(provisioner_handle, shell_properties)

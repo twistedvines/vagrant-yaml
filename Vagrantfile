@@ -22,6 +22,7 @@ Vagrant.configure('2') do |config|
   execution_handler = ::Local::Execution.new(
     vagrantfile_dir,
     "#{vagrantfile_dir}/config/local_scripts.yaml",
+    ARGV.first
   )
 
   execution_handler.execute_scripts_before

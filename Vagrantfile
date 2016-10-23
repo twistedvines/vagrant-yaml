@@ -22,11 +22,10 @@ Vagrant.configure('2') do |config|
   execution_handler = ::Local::Execution.new(
     vagrantfile_dir,
     "#{vagrantfile_dir}/config/local_scripts.yaml",
+    ARGV.first
   )
 
-  if ARGV.first == 'up'
-    execution_handler.execute_scripts_before
-  end
+  execution_handler.execute_scripts_before
 
   config.landrush.enabled = true
   config.landrush.tld = 'vagrant.local'

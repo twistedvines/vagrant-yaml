@@ -3,9 +3,10 @@ require 'yaml'
 module Local
   class Execution
 
-    def initialize(vagrant_dir, yaml_file_location)
+    def initialize(vagrant_dir, yaml_file_location, vagrant_action)
       @scripts = load_scripts(yaml_file_location, vagrant_dir)
       @vagrant_dir = vagrant_dir
+      @vagrant_action = vagrant_action
     end
 
     def execute_scripts_before
@@ -26,6 +27,10 @@ module Local
     end
 
     def execute(script_hash)
+      if script_hash[:actions].nil?
+        script_hash[:actions] = ['up']
+      end
+      return unless script_hash[:actions].include? @vagrant_action
       case script_hash[:type]
       when :script
         execute_script(script_hash[:location], script_hash[:args])

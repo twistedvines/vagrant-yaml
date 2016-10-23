@@ -39,9 +39,7 @@ module Local
 
     def execute_script(location, args)
       execution_str = "bash #{location} #{@vagrant_dir}"
-      args.each do |arg|
-        execution_str << " #{arg}"
-      end
+      execution_str << " #{args.join(' ')}"
       system(execution_str)
     end
   end

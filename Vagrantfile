@@ -24,7 +24,9 @@ Vagrant.configure('2') do |config|
     "#{vagrantfile_dir}/config/local_scripts.yaml",
   )
 
-  execution_handler.execute_scripts_before
+  if ARGV.first == 'up'
+    execution_handler.execute_scripts_before
+  end
 
   config.landrush.enabled = true
   config.landrush.tld = 'vagrant.local'

@@ -23,6 +23,78 @@ To browse the Puppet Master's management site, use `vagrant landrush ls` to find
 
 At present, every node uses `vagrant:vagrant` for login credentials.
 
+### Configuration Reference
+There are many different configuration options that can be used within box the `boxes.yaml` and `local_scripts.yaml` configuration files.
+
+### `boxes.yaml`
+At the root of the configuration file, boxes can be configured like so:
+```
+a_box:
+  ...configuration...
+another_box:
+  ...configuration...
+```
+
+Boxes have the following configuration properties:
+
+- `instances`: Define the number of nodes you would like to instantiate using these properties.
+- `box`: Allows configuration and customisation of the base box.
+- `network_config`: Allows for configuration and customisation of the box's networking configuration.
+- `provisioning`: Specifies all provisioning elements to be executed in-order.
+- `ssh_config`: Allows for configuration of SSH settings.
+- `synced_folders`: Allows for the specification of multiple synced folders.
+- `providers`: Allows for the configuration of providers.
+
+Each of these configuration properties can be configured as such:
+
+#### `instances`: An integer of the value of the required number of nodes
+
+The `instances` attribute is an integer which can be set to any integer value, 0 or above. Setting to 0 skips creation of the box, in effect disabling it.
+
+#### `box`: A hash of box configuration elements
+
+| Name   | Type     | Description                              |Sub-properties |
+|--------|----------|------------------------------------------|---------------|
+| `name` | `string` | Specify the name of the base box to use. | N/A           |
+
+#### `network_config`: A hash of networking configuration
+
+| Name       | Type     | Description                                 | Sub-properties    |
+|------------|----------|---------------------------------------------|-------------------|
+| `hostname` | `string` | The hostname of the box.                    | N/A               |
+| `networks` | `array`  | Each network adaptor connected to this box. | `private`, `type` |
+| `dns`      | `hash`   | DNS properties for this box.                | `servers`         |
+
+#### `provisioning`: An array of provisioning elements
+
+| Name                | Type     | Description                                                                                                 | Sub-properties |
+|---------------------|----------|-------------------------------------------------------------------------------------------------------------|----------------|
+| `type`              | `string` | The type of the provisioning element. Can be either `shell` or `file.`                                      | N/A            |
+| `source`            | `string` | The source path of the file to upload. Only applies if the `type` is set to `file`.                         | N/A            |
+| `destination`       | `string` | The destination path of the file to upload. Only applies if the `type` is set to `file`.                    | N/A            |
+| `path`              | `string` | The local path of the script to upload and run. Only applies if the `type` is set to `shell`.               | N/A            |
+| `privileged`        | `string` | Whether to run the script as a privileged user (i.e. `root`). Only applies if the `type` is set to `shell`. | N/A            |
+
+#### `ssh_config`: A hash of SSH configuration elements
+
+| Name         | Type      | Description                                   | Sub-properties |
+|--------------|-----------|-----------------------------------------------|----------------|
+| `insert_key` | `boolean` | Determines whether to insert a secure keypair | N/A            |
+
+#### `synced_folders`: An array of synced folder specifications
+
+| Name          | Type      | Description                                                                | Sub-properties |
+|---------------|-----------|----------------------------------------------------------------------------|----------------|
+| `local_path`  | `string`  | The local path of the folder to share.                                     | N/A            |
+| `remote_path` | `string`  | The remote path of the folder to share.                                    | N/A            |
+| `type`        | `symbol`  | The type of the folder share. Default is set to use the `vagrant` default. | N/A            |
+
+#### `providers`: A hash of provider configurations
+
+| Name          | Type   | Description                                              | Sub-properties                               |
+|---------------|--------|----------------------------------------------------------|----------------------------------------------|
+| `virtualbox`  | `hash` | The hash of configuration items for `virtualbox` to use. | `name`, `cores`, `memory`, `guest_additions` |
+
 ## Requirements
 ### System
 The environment can be quite resource-intensive for modest systems: the master itself, by default, uses 4GB of RAM and 2 vCPUs. Each agent is configured to use 1GB of RAM and 1 vCPU. This can all be configured using the supplied YAML configuration, however.

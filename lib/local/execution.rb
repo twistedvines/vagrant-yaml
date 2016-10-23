@@ -37,7 +37,6 @@ module Local
       args.each do |arg|
         execution_str << " #{arg}"
       end
-      puts "executing #{execution_str}"
       system(execution_str)
     end
   end

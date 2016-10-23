@@ -1,7 +1,5 @@
 #!/bin/bash
 
-echo "args: $@"
-
 VAGRANT_DIR=$1
 PE_PATH=$2
 DISTRIBUTION=$3

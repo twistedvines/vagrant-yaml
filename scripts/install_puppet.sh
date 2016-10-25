@@ -1,4 +1,5 @@
 #!/bin/bash
+export DEBIAN_FRONTEND=noninteractive
 echo "Installing Puppet..."
 (
   PUPPETMASTER_HOSTNAME=vagrant-puppetmaster.vagrant.local
@@ -8,7 +9,7 @@ echo "Installing Puppet..."
     grep Debian /etc/issue
     if [ $? -eq 0 ]; then
       echo "...but first we need cURL. This is Debian, after all..."
-      apt -yq install curl
+      apt -q -y install curl > /dev/null
     fi
     curl -sk "https://${PUPPETMASTER_HOSTNAME}:8140/packages/current/install.bash" | bash > /dev/null
   else

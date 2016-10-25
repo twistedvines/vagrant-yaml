@@ -61,19 +61,21 @@ Vagrant.configure('2') do |config|
         if box_properties[:synced_folders]
 
           box_properties[:synced_folders].each do |synced_folder|
-            # If the type isn't specified, we default to using guest customisation...
-            if synced_folder[:type]
-              defined_box.vm.synced_folder(
-                synced_folder[:local_path],
-                synced_folder[:remote_path],
-                type: synced_folder[:type]
-              )
-            else
-              defined_box.vm.synced_folder(
+            args = {
+              positional: [
                 synced_folder[:local_path],
                 synced_folder[:remote_path]
+              ],
+              double_splat: {
+                type: synced_folder[:type],
+                disabled: synced_folder[:disabled]
+              }
+            }
+            # If the type isn't specified, we default to using guest customisation...
+              defined_box.vm.synced_folder(
+                *args[:positional],
+                **args[:double_splat]
               )
-            end
           end
 
         end

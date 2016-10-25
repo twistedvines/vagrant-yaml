@@ -43,6 +43,9 @@ centos-master:
   :synced_folders:
   - :local_path: './puppet-labenvironment'
     :remote_path: '/puppet_code'
+  - :local_path: './'
+    :remote_path: '/vagrant'
+    :disabled: true
   :providers:
     :virtualbox:
       :name: 'vagrant-puppet-master'
@@ -79,6 +82,12 @@ centos-agent:
 
   :ssh_config:
     :insert_key: false
+
+  :synced_folders:
+  - :local_path: './'
+    :remote_path: '/vagrant'
+    :disabled: true
+
   :providers:
     :virtualbox:
       :name: 'vagrant-puppet-centosagent'
@@ -115,6 +124,12 @@ debian-agent:
  
   :ssh_config:
     :insert_key: false
+
+  :synced_folders:
+  - :local_path: './'
+    :remote_path: '/vagrant'
+    :disabled: true
+
   :providers:
     :virtualbox:
       :name: 'vagrant-puppet-debianagent'
@@ -151,6 +166,12 @@ ubuntu-agent:
 
   :ssh_config:
     :insert_key: false
+
+  :synced_folders:
+  - :local_path: './'
+    :remote_path: '/vagrant'
+    :disabled: true
+
   :providers:
     :virtualbox:
       :name: 'vagrant-puppet-ubuntuagent'

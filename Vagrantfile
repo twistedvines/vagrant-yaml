@@ -57,7 +57,8 @@ Vagrant.configure('2') do |config|
             defined_box.vbguest.auto_update = box_properties[:providers][:virtualbox][:guest_additions]
           end
         end
-        defined_box.vm.box = box_properties[:box][:name]
+        # May want to raise an error if a default property doesn't exist
+        defined_box.vm.box = box_properties[:box][:default][:name]
         defined_box.vm.hostname = fqdn
 
         if box_properties[:synced_folders]
@@ -115,14 +116,23 @@ Vagrant.configure('2') do |config|
         end
 
         box_properties[:providers].each do |provider_name, provider_properties|
+          if box_properties[:box][:providers]
+            provider_properties[:override] = Hash.new
+            if box_properties[:box][:providers][provider_name]
+              provider_properties[:override][:vm] = {
+                box: box_properties[:box][:providers][provider_name][:name],
+                box_url: box_properties[:box][:providers][provider_name][:url]
+              }
+            end
+          end
           case provider_name
           when :virtualbox
-            defined_box.vm.provider 'virtualbox' do |vbox|
-              configure_virtualbox_provider(vbox, provider_properties, new_box_name)
+            defined_box.vm.provider 'virtualbox' do |vbox, override|
+              configure_virtualbox_provider(vbox, override, provider_properties, new_box_name)
             end
           when :vmware
-            defined_box.vm.provider 'vmware_workstation' do |vmware|
-              configure_vmware_provider(vmware, provider_properties, new_box_name)
+            defined_box.vm.provider 'vmware_workstation' do |vmware, override|
+              configure_vmware_provider(vmware, override, provider_properties, new_box_name)
             end
           end
         end
@@ -133,18 +143,23 @@ Vagrant.configure('2') do |config|
 end
 
 # helper methods
-def configure_virtualbox_provider(provider_handle, provider_properties, name)
-  configure_abstract_provider(provider_handle, provider_properties, name)
+def configure_virtualbox_provider(provider_handle, override, provider_properties, name)
+  configure_abstract_provider(provider_handle, override, provider_properties, name)
 end
 
-def configure_vmware_provider(provider_handle, provider_properties, name)
-  configure_abstract_provider(provider_handle, provider_properties, name)
+def configure_vmware_provider(provider_handle, override, provider_properties, name)
+  configure_abstract_provider(provider_handle, override, provider_properties, name)
 end
 
-def configure_abstract_provider(provider_handle, provider_properties, name)
+def configure_abstract_provider(provider_handle, override, provider_properties, name)
   provider_handle.memory = provider_properties[:memory]
   provider_handle.cpus = provider_properties[:cores]
   provider_handle.name = name
+  if provider_properties[:override] && !provider_properties[:override].empty?
+    override.vm.box = provider_properties[:override][:vm][:box]
+    override.vm.box_url = provider_properties[:override][:vm][:box_url]
+  end
+  provider_handle
 end
 
 def provision_shell(provisioner_handle, shell_properties)

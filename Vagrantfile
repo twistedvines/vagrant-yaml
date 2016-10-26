@@ -17,6 +17,8 @@ vagrantfile_dir = File.absolute_path(File.dirname(__FILE__))
 
 BOX_CONFIG = YAML.load_file("#{vagrantfile_dir}/config/boxes.yaml")
 
+VAGRANT_DEFAULT_PROVIDER = 'virtualbox'
+
 Vagrant.configure('2') do |config|
 
   execution_handler = ::Local::Execution.new(
@@ -118,6 +120,10 @@ Vagrant.configure('2') do |config|
             defined_box.vm.provider 'virtualbox' do |vbox|
               configure_virtualbox_provider(vbox, provider_properties, new_box_name)
             end
+          when :vmware
+            defined_box.vm.provider 'vmware_workstation' do |vmware|
+              configure_vmware_provider(vmware, provider_properties, new_box_name)
+            end
           end
         end
       end
@@ -128,6 +134,14 @@ end
 
 # helper methods
 def configure_virtualbox_provider(provider_handle, provider_properties, name)
+  configure_abstract_provider(provider_handle, provider_properties, name)
+end
+
+def configure_vmware_provider(provider_handle, provider_properties, name)
+  configure_abstract_provider(provider_handle, provider_properties, name)
+end
+
+def configure_abstract_provider(provider_handle, provider_properties, name)
   provider_handle.memory = provider_properties[:memory]
   provider_handle.cpus = provider_properties[:cores]
   provider_handle.name = name

@@ -48,10 +48,15 @@ centos-master:
     :disabled: true
   :providers:
     :virtualbox:
-      :name: 'vagrant-puppet-master'
-      :cores: 2
-      :memory: 4096
+      :name: &master_name 'vagrant-puppet-master'
+      :cores: &master_cores 2
+      :memory: &master_mem 4096
       :guest_additions: true
+    :vmware:
+      :name: *master_name
+      :cores: *master_cores
+      :memory: *master_mem
+      :vmware_tools: true
 
 centos-agent:
   :instances: 1

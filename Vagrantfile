@@ -7,13 +7,13 @@
   # Allows the VMs to reference each other via hostname.
 
 # add lib directory to $LOAD_PATH
-$:.unshift(File.expand_path('./lib'))
+vagrantfile_dir = File.absolute_path(File.dirname(__FILE__))
+$:.unshift(File.expand_path("#{vagrantfile_dir}/lib"))
 
 # Vagrant dev box for a puppet master.
 require 'yaml'
 require 'local'
 
-vagrantfile_dir = File.absolute_path(File.dirname(__FILE__))
 
 BOX_CONFIG = YAML.load_file("#{vagrantfile_dir}/config/boxes.yaml")
 
@@ -108,9 +108,9 @@ Vagrant.configure('2') do |config|
           box_properties[:provisioning].each do |provisioner|
             case provisioner[:type]
             when 'shell'
-              provision_shell(defined_box.vm, provisioner)
+              provision_shell(defined_box.vm, provisioner, vagrantfile_dir)
             when 'file'
-              provision_file(defined_box.vm, provisioner)
+              provision_file(defined_box.vm, provisioner, vagrantfile_dir)
             end
           end
         end
@@ -162,7 +162,7 @@ def configure_abstract_provider(provider_handle, override, provider_properties, 
   provider_handle
 end
 
-def provision_shell(provisioner_handle, shell_properties)
+def provision_shell(provisioner_handle, shell_properties, working_dir = '.')
   if shell_properties[:args]
     # limitation of Vagrant - we need to push the script up and call it...
     file_properties = {
@@ -181,18 +181,28 @@ def provision_shell(provisioner_handle, shell_properties)
     provisioner_handle.provision(
       'shell',
       privileged: shell_properties[:privileged],
-      path: shell_properties[:path]
+      path: resolve_absolute_path(shell_properties[:path], working_dir)
     )
   end
 
 end
 
-def provision_file(provisioner_handle, shell_properties)
+def provision_file(provisioner_handle, shell_properties, working_dir = '.')
 
   provisioner_handle.provision(
     'file',
-    source: shell_properties[:source],
+    source: resolve_absolute_path(shell_properties[:source], working_dir),
     destination: shell_properties[:destination]
   )
 
+end
+
+def resolve_absolute_path(path, working_directory)
+  split_path = path.split('/')
+  if split_path.first == '.'
+    split_path.shift
+    "#{working_directory}/#{split_path.join('/')}"
+  else
+    path
+  end
 end

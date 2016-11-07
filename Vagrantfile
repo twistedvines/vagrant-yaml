@@ -13,6 +13,7 @@ $:.unshift(File.expand_path("#{vagrantfile_dir}/lib"))
 # Vagrant dev box for a puppet master.
 require 'yaml'
 require 'local'
+require 'error'
 
 
 BOX_CONFIG = YAML.load_file("#{vagrantfile_dir}/config/boxes.yaml")
@@ -58,6 +59,9 @@ Vagrant.configure('2') do |config|
           end
         end
         # May want to raise an error if a default property doesn't exist
+        unless box_properties[:box][:default]
+          raise ConfigError.new("Missing default box configuration for #{box_name}")
+        end
         defined_box.vm.box = box_properties[:box][:default][:name]
         defined_box.vm.hostname = fqdn
 

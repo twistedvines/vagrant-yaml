@@ -1,9 +1,10 @@
 ---
 centos-master:
   :box:
-    :name: 'centos/6'
+    :default:
+      :name: 'centos/6'
   :network_config:
-    :hostname: 'vagrant-puppetmaster.vagrant.local'
+    :hostname: &puppet_master_hostname 'vagrant-puppetmaster.vagrant.local'
     :networks:
     - :private: true
       :type: 'dhcp'
@@ -61,7 +62,8 @@ centos-master:
 centos-agent:
   :instances: 1
   :box:
-    :name: 'centos/6'
+    :default:
+      :name: 'centos/6'
   :network_config:
     :hostname: 'vagrant-centosagent.vagrant.local'
     :networks:
@@ -102,7 +104,8 @@ centos-agent:
 debian-agent:
   :instances: 1
   :box:
-    :name: 'debian/jessie64'
+    :default:
+      :name: 'debian/jessie64'
   :network_config:
     :hostname: 'vagrant-debianagent.vagrant.local'
     :networks:
@@ -144,7 +147,8 @@ debian-agent:
 ubuntu-agent:
   :instances: 1
   :box:
-    :name: 'ubuntu/trusty64'
+    :default:
+      :name: 'ubuntu/trusty64'
   :network_config:
     :hostname: 'vagrant-ubuntuagent.vagrant.local'
     :networks:

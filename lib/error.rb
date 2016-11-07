@@ -1,0 +1,1 @@
+class ConfigError < StandardError; end

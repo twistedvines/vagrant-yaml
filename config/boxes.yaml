@@ -86,6 +86,8 @@ centos-agent:
   - :type: 'shell'
     :privileged: true
     :path: './scripts/install_puppet.sh'
+    :args:
+    - *puppet_master_hostname
 
   :ssh_config:
     :insert_key: false
@@ -129,6 +131,8 @@ debian-agent:
   - :type: 'shell'
     :privileged: true
     :path: './scripts/install_puppet.sh'
+    :args:
+    - *puppet_master_hostname
  
   :ssh_config:
     :insert_key: false
@@ -172,6 +176,8 @@ ubuntu-agent:
   - :type: 'shell'
     :privileged: true
     :path: './scripts/install_puppet.sh'
+    :args:
+    - *puppet_master_hostname
 
   :ssh_config:
     :insert_key: false

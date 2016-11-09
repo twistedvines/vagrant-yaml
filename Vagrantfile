@@ -10,10 +10,8 @@
 vagrantfile_dir = File.absolute_path(File.dirname(__FILE__))
 $:.unshift(File.expand_path("#{vagrantfile_dir}/lib"))
 
-# Vagrant dev box for a puppet master.
 require 'yaml'
 require 'local'
-
 
 BOX_CONFIG = YAML.load_file("#{vagrantfile_dir}/config/boxes.yaml")
 

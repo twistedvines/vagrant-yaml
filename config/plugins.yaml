@@ -1,0 +1,32 @@
+---
+
+# Default plugin options: note that these settings can be overriden on an individual basis using individual box sections in boxes.yaml.
+
+:landrush:
+  :name: 'landrush'
+  :providers: 
+    - :virtualbox
+  :enabled_method: :enabled=
+  :methods:
+    :enabled=:
+      :positional_args:
+        - true
+    :tld=:
+      :positional_args:
+        - 'vagrant.local'
+
+:hostmanager:
+  :name: 'hostmanager'
+  :providers: 
+    - :vmware_workstation
+  :enabled_method: :enabled=
+  :methods:
+    :enabled=:
+      :positional_args:
+        - true
+    :manage_host=:
+      :positional_args:
+        - true
+    :manage_guest=: 
+      :positional_args:
+        - true

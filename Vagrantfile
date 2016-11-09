@@ -13,10 +13,11 @@ $:.unshift(File.expand_path("#{vagrantfile_dir}/lib"))
 # Vagrant dev box for a puppet master.
 require 'yaml'
 require 'local'
-require 'error'
 
 
 BOX_CONFIG = YAML.load_file("#{vagrantfile_dir}/config/boxes.yaml")
+
+PLUGIN_CONFIGS = YAML.load_file("#{vagrantfile_dir}/config/plugins.yaml")
 
 VAGRANT_DEFAULT_PROVIDER = 'virtualbox'
 
@@ -30,9 +31,25 @@ Vagrant.configure('2') do |config|
 
   execution_handler.execute_scripts_before
 
-  config.landrush.enabled = true
-  config.landrush.tld = 'vagrant.local'
-  config.landrush.host_interface_excludes = [/lo[0-9]*/]
+  provider = get_provider
+  
+  # manage plugins
+  PLUGIN_CONFIGS.each do |plugin_name, plugin_config|
+    if plugin_config[:providers].include? provider
+      to_enable = true
+    else
+      to_enable = false
+    end
+    plugin_config[:methods].each do |method_name, method_args|
+      if method_name == plugin_config[:enabled_method]
+        # override based on which provider we're using
+        method_args[:positional_args] = [to_enable]
+      end
+
+      apply_plugin_configuration_settings(config, plugin_config[:name], method_name, method_args)
+    end
+  end
+
   BOX_CONFIG.each do |box_name, box_properties|
     no_of_instances = box_properties[:instances] || 1
 
@@ -49,7 +66,32 @@ Vagrant.configure('2') do |config|
         new_box_name = box_name
       end
 
+      # Do box-specific custom provisioning
+      begin
+        require "box/#{box_name}"
+        puts "loaded library files for #{box_name}"
+      rescue LoadError => le
+        require "box/nil_box"
+        $stderr.puts "Warning: could not load custom Ruby for #{box_name}: " \
+          "Using NilBox instead."
+        # use Nil object
+        box_class_handle = Vagrant::Boxes::NilBox
+      else
+        box_class_handle = Vagrant.const_get("Vagrant::Boxes::#{box_name.capitalize}")
+      end
+
+      box_ruby_provisioner = box_class_handle.new(
+          box_properties,
+          vagrantfile_dir
+        )
+
+      box_ruby_provisioner.process_stage :beginning
+      
       config.vm.define new_box_name do |defined_box|
+        # Box definition - beginning stage
+        box_ruby_provisioner.defined_box = defined_box
+        box_ruby_provisioner.process_stage :defined_box_start
+
         if box_properties[:providers][:virtualbox]
           unless box_properties[:providers][:virtualbox][:guest_additions]
             # Disable guest additions install by default
@@ -59,11 +101,11 @@ Vagrant.configure('2') do |config|
           end
         end
         # May want to raise an error if a default property doesn't exist
-        unless box_properties[:box][:default]
-          raise ConfigError.new("Missing default box configuration for #{box_name}")
-        end
         defined_box.vm.box = box_properties[:box][:default][:name]
         defined_box.vm.hostname = fqdn
+
+        # Synced folder configuration stage
+        box_ruby_provisioner.process_stage :defined_synced_folders
 
         if box_properties[:synced_folders]
 
@@ -87,6 +129,9 @@ Vagrant.configure('2') do |config|
 
         end
 
+        # Network configuration stage
+        box_ruby_provisioner.process_stage :defined_network_configuration
+
         if box_properties[:network_config][:dns]
           dns_config = box_properties[:network_config][:dns]
           if dns_config[:servers]
@@ -101,23 +146,43 @@ Vagrant.configure('2') do |config|
           defined_box.vm.network privacy, type: network[:type]
         end
 
-        if box_properties[:ssh_config]
+        # SSH configuration stage
+        box_ruby_provisioner.process_stage :defined_ssh_configuration
 
-          if box_properties[:ssh_config][:insert_key]
-            defined_box.ssh.insert_key = box_properties[:ssh_config][:insert_key]
+        if box_properties[:ssh_config]
+          valid_properties = [
+            :insert_key, :username, :password, :shell, :host, :port,
+            :guest_port, :private_key_path, :sudo_command
+          ]
+          valid_properties.each do |property|
+            # need to catch boolean values as well, hence the #nil? call
+            unless box_properties[:ssh_config][property].nil?
+              defined_box.ssh.send(
+                "#{property}=",
+                box_properties[:ssh_config][property]
+              )
+            end
           end
         end
+
+        # Box provisioning stage
+        box_ruby_provisioner.process_stage :defined_provisioning_configuration
 
         if box_properties[:provisioning]
           box_properties[:provisioning].each do |provisioner|
             case provisioner[:type]
             when 'shell'
               provision_shell(defined_box.vm, provisioner, vagrantfile_dir)
+            when 'inline_shell'
+              provision_inline_shell(defined_box.vm, provisioner, vagrantfile_dir)
             when 'file'
               provision_file(defined_box.vm, provisioner, vagrantfile_dir)
             end
           end
         end
+
+        # Provider config configuration stage
+        box_ruby_provisioner.process_stage :defined_provider_configuration_start
 
         box_properties[:providers].each do |provider_name, provider_properties|
           if box_properties[:box][:providers]
@@ -131,19 +196,31 @@ Vagrant.configure('2') do |config|
           end
           case provider_name
           when :virtualbox
+            # Virtualbox provider configuration stage
             defined_box.vm.provider 'virtualbox' do |vbox, override|
+              box_ruby_provisioner.provider_handle = vbox
+              box_ruby_provisioner.override_config = override
+              box_ruby_provisioner.process_stage :defined_virtualbox_provider_configuration
               configure_virtualbox_provider(vbox, override, provider_properties, new_box_name)
             end
           when :vmware
+            # VMware provider configuration stage
             defined_box.vm.provider 'vmware_workstation' do |vmware, override|
+              box_ruby_provisioner.provider_handle = vmware
+              box_ruby_provisioner.override_config = override
+              box_ruby_provisioner.process_stage :defined_vmware_provider_configuration
               configure_vmware_provider(vmware, override, provider_properties, new_box_name)
             end
           end
         end
+
+        box_ruby_provisioner.process_stage :defined_provider_configuration_end
       end
+      # Box definition - end stage
+      box_ruby_provisioner.process_stage :defined_box_end
+      box_ruby_provisioner.process_stage :end
     end
   end
-
 end
 
 # helper methods
@@ -191,6 +268,21 @@ def provision_shell(provisioner_handle, shell_properties, working_dir = '.')
 
 end
 
+def provision_inline_shell(provisioner_handle, shell_properties, working_dir = '.')
+
+  if shell_properties[:inline].is_a? Array
+    inline_script = shell_properties[:inline].join(';')
+  else
+    inline_script = shell_properties[:inline]
+  end
+
+  provisioner_handle.provision(
+    'shell',
+    privileged: shell_properties[:privileged],
+    inline: inline_script
+  )
+end
+
 def provision_file(provisioner_handle, shell_properties, working_dir = '.')
 
   provisioner_handle.provision(
@@ -209,4 +301,49 @@ def resolve_absolute_path(path, working_directory)
   else
     path
   end
+end
+
+def get_provider
+  ARGV.each do |arg|
+    if arg.match(/\-\-provider=/)
+      return arg.split('=').last.to_sym
+    end
+  end
+  return VAGRANT_DEFAULT_PROVIDER.to_sym
+end
+
+def apply_plugin_configuration_settings(
+  config,
+  plugin_name,
+  method_name,
+  method_args
+)
+
+  plugin_handle = config.send(plugin_name)
+
+  if method_args[:positional_args] &&
+      method_args[:splat_args]
+
+    return plugin_handle.send(
+      method_name,
+      *method_args[:positional_args],
+      **method_args[:splat_args]
+    )
+  end
+
+  if method_args[:positional_args]
+    return plugin_handle.send(
+      method_name,
+      *method_args[:positional_args]
+    )
+  end
+
+  if method_args[:splat_args]
+    return plugin_handle.send(
+      method_name,
+      **method_args[:splat_args]
+    )
+  end
+
+  return plugin_handle.send(mthod_name)
 end

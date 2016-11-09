@@ -1,0 +1,3 @@
+ARGS=($@)
+
+echo ${ARGS[@]}

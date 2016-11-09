@@ -1,194 +1,54 @@
 ---
-centos-master:
+sample-centos-box:
+  :instances: 1
+
   :box:
     :default:
       :name: 'centos/6'
+    :providers:
+      :vmware:
+        :name: 'centos/6'
+      :virtualbox:
+        :name: 'centos/6'
+
   :network_config:
-    :hostname: &puppet_master_hostname 'vagrant-puppetmaster.vagrant.local'
+    :hostname: &box_hostname 'sample-box.vagrant.local'
     :networks:
-    - :private: true
-      :type: 'dhcp'
+      - :private: true
+        :type: 'dhcp'
     :dns:
       :servers:
-      - '208.67.222.222'
+        - '208.67.222.222'
+
   :provisioning:
-  - :type: 'file'
-    :source: './files/tmp/pe.conf'
-    :destination: '/tmp/pe.conf'
+    - :type: 'file'
+      :source: './files/tmp/foo'
+      :destination: '/tmp/bar'
 
-  - :type: 'file'
-    :source: './files/tmp/pe-latest.tgz'
-    :destination: &pe_installer_tar '/tmp/pe-latest.tgz'
-
-  - :type: 'shell'
-    :privileged: true
-    :path: './scripts/configure_root_user.sh'
-
-  - :type: 'shell'
-    :privileged: true
-    :path: './scripts/configure_sshd.sh'
-
-
-  - :type: 'shell'
-    :privileged: true
-    :path: './scripts/install_puppet_enterprise.sh'
-    :args:
-    - 'el'
-    - 'x86_64'
-    - '6'
-    - '2016.4.0'
-    - *pe_installer_tar
-    
+    - :type: 'shell'
+      :privileged: true
+      :path: './scripts/remote/hello_world.sh'
+      :args:
+        - 'hello'
+        - 'world'
+      
   :ssh_config:
     :insert_key: false
+
   :synced_folders:
-  - :local_path: './puppet-labenvironment'
-    :remote_path: '/puppet_code'
-  - :local_path: './'
-    :remote_path: '/vagrant'
-    :disabled: true
+    - :local_path: './'
+      :remote_path: '/vagrant'
+      :disabled: true
+
   :providers:
     :virtualbox:
-      :name: &master_name 'vagrant-puppet-master'
-      :cores: &master_cores 2
-      :memory: &master_mem 4096
+      :name: &box_name 'vagrant-puppet-master'
+      :cores: &box_cores 2
+      :memory: &box_mem 4096
       :guest_additions: true
+
     :vmware:
-      :name: *master_name
-      :cores: *master_cores
-      :memory: *master_mem
+      :name: *box_name
+      :cores: *box_cores
+      :memory: *box_mem
       :vmware_tools: true
-
-centos-agent:
-  :instances: 1
-  :box:
-    :default:
-      :name: 'centos/6'
-  :network_config:
-    :hostname: 'vagrant-centosagent.vagrant.local'
-    :networks:
-    - :private: true
-      :type: 'dhcp'
-    :dns:
-      :servers:
-      - '208.67.222.222'
-
-  :provisioning:
-
-  - :type: 'shell'
-    :privileged: true
-    :path: './scripts/configure_root_user.sh'
-
-  - :type: 'shell'
-    :privileged: true
-    :path: './scripts/configure_sshd.sh'
-
-  - :type: 'shell'
-    :privileged: true
-    :path: './scripts/install_puppet.sh'
-    :args:
-    - *puppet_master_hostname
-
-  :ssh_config:
-    :insert_key: false
-
-  :synced_folders:
-  - :local_path: './'
-    :remote_path: '/vagrant'
-    :disabled: true
-
-  :providers:
-    :virtualbox:
-      :name: 'vagrant-puppet-centosagent'
-      :cores: 1
-      :memory: 1024
-
-debian-agent:
-  :instances: 1
-  :box:
-    :default:
-      :name: 'debian/jessie64'
-  :network_config:
-    :hostname: 'vagrant-debianagent.vagrant.local'
-    :networks:
-    - :private: true
-      :type: 'dhcp'
-    :dns:
-      :servers:
-      - '208.67.222.222'
-
-
-  :provisioning:
-
-  - :type: 'shell'
-    :privileged: true
-    :path: './scripts/configure_root_user.sh'
-
-  - :type: 'shell'
-    :privileged: true
-    :path: './scripts/configure_sshd.sh'
-
-  - :type: 'shell'
-    :privileged: true
-    :path: './scripts/install_puppet.sh'
-    :args:
-    - *puppet_master_hostname
- 
-  :ssh_config:
-    :insert_key: false
-
-  :synced_folders:
-  - :local_path: './'
-    :remote_path: '/vagrant'
-    :disabled: true
-
-  :providers:
-    :virtualbox:
-      :name: 'vagrant-puppet-debianagent'
-      :cores: 1
-      :memory: 1024
-
-ubuntu-agent:
-  :instances: 1
-  :box:
-    :default:
-      :name: 'ubuntu/trusty64'
-  :network_config:
-    :hostname: 'vagrant-ubuntuagent.vagrant.local'
-    :networks:
-    - :private: true
-      :type: 'dhcp'
-    :dns:
-      :servers:
-      - '208.67.222.222'
-
-
-  :provisioning:
-
-  - :type: 'shell'
-    :privileged: true
-    :path: './scripts/configure_root_user.sh'
-
-  - :type: 'shell'
-    :privileged: true
-    :path: './scripts/configure_sshd.sh'
-
-  - :type: 'shell'
-    :privileged: true
-    :path: './scripts/install_puppet.sh'
-    :args:
-    - *puppet_master_hostname
-
-  :ssh_config:
-    :insert_key: false
-
-  :synced_folders:
-  - :local_path: './'
-    :remote_path: '/vagrant'
-    :disabled: true
-
-  :providers:
-    :virtualbox:
-      :name: 'vagrant-puppet-ubuntuagent'
-      :cores: 1
-      :memory: 1024

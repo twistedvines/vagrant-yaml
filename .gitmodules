@@ -1,3 +1,0 @@
-[submodule "puppet-labenvironment"]
-	path = puppet-labenvironment
-	url = git@github.com:twistedvines/puppet-labenvironment.git

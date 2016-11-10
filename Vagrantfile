@@ -110,25 +110,9 @@ Vagrant.configure('2') do |config|
         box_ruby_provisioner.process_stage :defined_synced_folders
 
         if box_properties[:synced_folders]
-
-          box_properties[:synced_folders].each do |synced_folder|
-            args = {
-              positional: [
-                synced_folder[:local_path],
-                synced_folder[:remote_path]
-              ],
-              double_splat: {
-                type: synced_folder[:type],
-                disabled: synced_folder[:disabled]
-              }
-            }
-            # If the type isn't specified, we default to using guest customisation...
-              defined_box.vm.synced_folder(
-                *args[:positional],
-                **args[:double_splat]
-              )
+          box_properties[:synced_folders].each do |synced_folder_properties|
+            create_synced_folder(defined_box.vm, **synced_folder_properties)
           end
-
         end
 
         # Network configuration stage
@@ -348,4 +332,22 @@ def apply_plugin_configuration_settings(
   end
 
   return plugin_handle.send(mthod_name)
+end
+
+def create_synced_folder(provisioner_handle, **synced_folder_properties)
+ args = {
+    positional: [
+      synced_folder_properties[:local_path],
+      synced_folder_properties[:remote_path]
+    ],
+    double_splat: {
+      type: synced_folder_properties[:type],
+      disabled: synced_folder_properties[:disabled]
+    }
+  }
+  # If the type isn't specified, we default to using guest customisation...
+    provisioner_handle.synced_folder(
+      *args[:positional],
+      **args[:double_splat]
+    )
 end

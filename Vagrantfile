@@ -24,11 +24,13 @@ SCRIPT_CONFIGS = load_configs("#{vagrantfile_dir}/config/local_scripts") ||
 
 VAGRANT_DEFAULT_PROVIDER = 'virtualbox'
 
+VAGRANT_COMMAND = ARGV.first
+
 Vagrant.configure('2') do |config|
   execution_handler = ::Local::Execution.new(
     vagrantfile_dir,
     SCRIPT_CONFIGS,
-    ARGV.first
+    VAGRANT_COMMAND
   )
 
   execution_handler.execute_scripts_before
@@ -283,6 +285,7 @@ def provision_inline_shell(provisioner_handle, shell_properties, working_dir = '
     privileged: shell_properties[:privileged],
     inline: inline_script
   )
+
 end
 
 def provision_file(provisioner_handle, shell_properties, working_dir = '.')

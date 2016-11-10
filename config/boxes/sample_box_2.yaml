@@ -1,18 +1,16 @@
 ---
-sample-centos-box:
-  :instances: 1
+sample-ubuntu-box:
+  :instances: 2
 
   :box:
     :default:
-      :name: 'centos/6'
+      :name: 'ubuntu/trusty64'
     :providers:
-      :vmware:
-        :name: 'centos/6'
       :virtualbox:
-        :name: 'centos/6'
+        :name: 'ubuntu/trusty64'
 
   :network_config:
-    :hostname: &box_hostname 'sample-box.vagrant.local'
+    :hostname: &box_hostname 'sample-box-ubuntu.vagrant.local'
     :networks:
       - :private: true
         :type: 'dhcp'
@@ -42,9 +40,9 @@ sample-centos-box:
 
   :providers:
     :virtualbox:
-      :name: &box_name 'vagrant-puppet-master'
-      :cores: &box_cores 2
-      :memory: &box_mem 4096
+      :name: &box_name 'vagrant-sample-ubuntu'
+      :cores: &box_cores 1
+      :memory: &box_mem 512
       :guest_additions: true
 
     :vmware:

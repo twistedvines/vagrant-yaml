@@ -1,0 +1,54 @@
+---
+sample-centos-box:
+  :instances: 1
+
+  :box:
+    :default:
+      :name: 'centos/6'
+    :providers:
+      :vmware:
+        :name: 'centos/6'
+      :virtualbox:
+        :name: 'centos/6'
+
+  :network_config:
+    :hostname: &box_hostname 'sample-box.vagrant.local'
+    :networks:
+      - :private: true
+        :type: 'dhcp'
+    :dns:
+      :servers:
+        - '208.67.222.222'
+
+  :provisioning:
+    - :type: 'file'
+      :source: './files/tmp/foo'
+      :destination: '/tmp/bar'
+
+    - :type: 'shell'
+      :privileged: true
+      :path: './scripts/remote/hello_world.sh'
+      :args:
+        - 'hello'
+        - 'world'
+      
+  :ssh_config:
+    :insert_key: false
+
+  :synced_folders:
+    - :local_path: './'
+      :remote_path: '/vagrant'
+      :disabled: true
+
+  :providers:
+    :virtualbox:
+      :name: &box_name 'vagrant-sample-centos'
+      :cores: &box_cores 1
+      :memory: &box_mem 512
+      :guest_additions: true
+
+    :vmware:
+      :name: *box_name
+      :cores: *box_cores
+      :memory: *box_mem
+      :vmware_tools: true

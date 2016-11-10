@@ -1,0 +1,9 @@
+---
+
+- :type: :script
+  :location: './scripts/local/hello_world.sh'
+  :runtime: :before
+  :args:
+  - "extra"
+  - "provisioning"
+  - "being executed here"

@@ -3,10 +3,12 @@ require 'yaml'
 module Local
   class Execution
 
-    def initialize(vagrant_dir, yaml_file_location, vagrant_action)
-      @scripts = load_scripts(yaml_file_location, vagrant_dir)
+    attr_reader :vagrant_dir, :script_configs
+
+    def initialize(vagrant_dir, script_configs, vagrant_action)
       @vagrant_dir = vagrant_dir
       @vagrant_action = vagrant_action
+      @scripts = load_scripts(script_configs)
     end
 
     def execute_scripts_before
@@ -17,13 +19,12 @@ module Local
 
     private
 
-    def load_scripts(yaml_location, vagrant_dir)
-      scripts = YAML.load_file(yaml_location)
-      scripts.each do |script|
-        script[:location].sub!('./', "#{vagrant_dir}/")
-        script[:name] = script[:location].split('/').last
+    def load_scripts(script_configs)
+      script_configs.each do |script_config|
+        script_config[:location].sub!('./', "#{vagrant_dir}/")
+        script_config[:name] = script_config[:location].split('/').last
       end
-      scripts
+      script_configs
     end
 
     def execute(script_hash)

@@ -12,10 +12,12 @@ $:.unshift(File.expand_path("#{vagrantfile_dir}/lib"))
 
 require 'yaml'
 require 'local'
+require 'config'
+include Vagrant::ConfigManagement
 
-BOX_CONFIG = YAML.load_file("#{vagrantfile_dir}/config/boxes.yaml")
-
-PLUGIN_CONFIGS = YAML.load_file("#{vagrantfile_dir}/config/plugins.yaml")
+BOX_CONFIGS    = load_configs("#{vagrantfile_dir}/config/boxes")
+PLUGIN_CONFIGS = load_configs("#{vagrantfile_dir}/config/plugins")
+SCRIPT_CONFIGS = load_configs("#{vagrantfile_dir}/config/local_scripts")
 
 VAGRANT_DEFAULT_PROVIDER = 'virtualbox'
 
@@ -23,7 +25,7 @@ Vagrant.configure('2') do |config|
 
   execution_handler = ::Local::Execution.new(
     vagrantfile_dir,
-    "#{vagrantfile_dir}/config/local_scripts.yaml",
+    SCRIPT_CONFIGS,
     ARGV.first
   )
 
@@ -48,7 +50,7 @@ Vagrant.configure('2') do |config|
     end
   end
 
-  BOX_CONFIG.each do |box_name, box_properties|
+  BOX_CONFIGS.each do |box_name, box_properties|
     no_of_instances = box_properties[:instances] || 1
 
     (0...no_of_instances).each do |instance_id|

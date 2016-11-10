@@ -15,14 +15,16 @@ require 'local'
 require 'config'
 include Vagrant::ConfigManagement
 
-BOX_CONFIGS    = load_configs("#{vagrantfile_dir}/config/boxes")
-PLUGIN_CONFIGS = load_configs("#{vagrantfile_dir}/config/plugins")
-SCRIPT_CONFIGS = load_configs("#{vagrantfile_dir}/config/local_scripts")
+BOX_CONFIGS    = load_configs("#{vagrantfile_dir}/config/boxes") ||
+  Hash.new
+PLUGIN_CONFIGS = load_configs("#{vagrantfile_dir}/config/plugins") ||
+  Hash.new
+SCRIPT_CONFIGS = load_configs("#{vagrantfile_dir}/config/local_scripts") ||
+  Array.new
 
 VAGRANT_DEFAULT_PROVIDER = 'virtualbox'
 
 Vagrant.configure('2') do |config|
-
   execution_handler = ::Local::Execution.new(
     vagrantfile_dir,
     SCRIPT_CONFIGS,

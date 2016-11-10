@@ -20,7 +20,6 @@ module Local
     private
 
     def load_scripts(script_configs)
-      return [] if script_configs.nil?
       script_configs.each do |script_config|
         script_config[:location].sub!('./', "#{vagrant_dir}/")
         script_config[:name] = script_config[:location].split('/').last

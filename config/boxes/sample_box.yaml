@@ -27,11 +27,22 @@ sample-centos-box:
 
     - :type: 'shell'
       :privileged: true
-      :path: './scripts/remote/hello_world.sh'
+      :path: './scripts/remote/shell/hello_world.sh'
       :args:
         - 'hello'
         - 'world'
-      
+
+    - :type: 'shell'
+      :privileged: true
+      :path: './scripts/remote/shell/install_puppet.sh'
+
+    - :type: 'puppet'
+      :options:
+        :manifest_file: 'hello_world.pp'
+        :manifests_path: './scripts/remote/puppet/manifests'
+        :module_path: '/etc/puppetlabs/code/environments/production/modules'
+      :version: '4.8.0'
+
   :ssh_config:
     :insert_key: false
 

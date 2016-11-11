@@ -112,25 +112,9 @@ Vagrant.configure('2') do |config|
         box_ruby_provisioner.process_stage :defined_synced_folders
 
         if box_properties[:synced_folders]
-
-          box_properties[:synced_folders].each do |synced_folder|
-            args = {
-              positional: [
-                synced_folder[:local_path],
-                synced_folder[:remote_path]
-              ],
-              double_splat: {
-                type: synced_folder[:type],
-                disabled: synced_folder[:disabled]
-              }
-            }
-            # If the type isn't specified, we default to using guest customisation...
-              defined_box.vm.synced_folder(
-                *args[:positional],
-                **args[:double_splat]
-              )
+          box_properties[:synced_folders].each do |synced_folder_properties|
+            create_synced_folder(defined_box.vm, **synced_folder_properties)
           end
-
         end
 
         # Network configuration stage
@@ -181,6 +165,8 @@ Vagrant.configure('2') do |config|
               provision_inline_shell(defined_box.vm, provisioner, vagrantfile_dir)
             when 'file'
               provision_file(defined_box.vm, provisioner, vagrantfile_dir)
+            when 'puppet'
+              provision_puppet(defined_box, provisioner, vagrantfile_dir)
             end
           end
         end
@@ -298,6 +284,112 @@ def provision_file(provisioner_handle, shell_properties, working_dir = '.')
 
 end
 
+def provision_puppet(defined_box, puppet_properties, working_dir = '.')
+  if puppet_properties[:version]
+    case puppet_properties[:version].split('.').first.to_i
+    when 3
+      provision_puppet_via_vagrant_puppet(
+        defined_box.vm,
+        puppet_properties,
+        working_dir
+      )
+    when 4
+      provision_puppet_via_shell(
+        defined_box,
+        puppet_properties,
+        working_dir
+      )
+    end
+  end
+end
+
+def provision_puppet_via_shell(defined_box, puppet_properties, working_dir)
+
+  # export environment variables specified by puppet_properties[:environment_variables]
+  env_variable_export_str = ""
+  puppet_options = puppet_properties[:options]
+
+  if puppet_options[:manifests_path]
+    source = puppet_options[:manifests_path].sub('.', working_dir)
+  else
+    source = "#{working_dir}/manifests"
+  end
+  if puppet_options[:temp_dir]
+    temp_dir = puppet_options[:temp_dir]
+  else
+    temp_dir = '/tmp/puppet'
+  end
+  if puppet_options[:synced_folder_type]
+    synced_folder_type = puppet_options[:synced_folder_type]
+  else
+    synced_folder_type = 'rsync'
+  end
+  if puppet_options[:hiera_config_path]
+    hiera_remote_path = "#{resolve_absolute_path(puppet_options[:hiera_config_path], temp_dir)}"
+    provision_file(
+      defined_box.vm,
+      source: resolve_absolute_path(
+        puppet_options[:hiera_config_path],
+        working_dir
+      ),
+      destination: hiera_remote_path
+    )
+  else
+    hiera_remote_path = ''
+  end
+
+  create_synced_folder(
+    defined_box.vm,
+    local_path: source,
+    remote_path: temp_dir,
+    type: synced_folder_type
+  )
+
+  command_mappings = {
+    hiera_config_path: "--hiera_config=#{hiera_remote_path}",
+    module_path: "--modulepath=#{puppet_options[:module_path]}"
+  }
+
+  puppet_cmd_str = "#{puppet_options[:binary_path] || 'puppet'} apply " \
+    "#{temp_dir}/#{puppet_options[:manifest_file] || 'default.pp'} "
+
+    command_mappings.each do |cmd_mapping_name, cmd_mapping_value|
+      if puppet_options[cmd_mapping_name]
+        puppet_cmd_str << "#{cmd_mapping_value} "
+      end
+    end
+  if puppet_options[:additional_options]
+    puppet_cmd_str << "#{puppet_options[:additional_options].join(' ') || ''}"
+  end
+
+  # begin command
+  command = ""
+  if puppet_properties[:working_directory]
+    command << "cd #{puppet_properties[:working_directory]};"
+  end
+  command << puppet_cmd_str.strip
+  shell_properties = {
+    inline: [command],
+    privileged: true
+  }
+  provision_inline_shell(defined_box.vm, shell_properties, working_dir)
+end
+
+def provision_puppet_via_vagrant_puppet(provisioner_handle, puppet_properties, working_dir)
+  provisioner_handle.provision 'puppet' do |puppet|
+    puppet_options = puppet_properties[:options]
+    if puppet_options
+      puppet_options.each do |puppet_option_name, puppet_option_value|
+        puppet.send("#{puppet_option_name}=", puppet_option_value)
+      end
+    end
+  end
+end
+
+def get_puppet_version(box_name)
+  system("vagrant ssh #{box_name} -c 'puppet --version'")
+end
+
 def resolve_absolute_path(path, working_directory)
   split_path = path.split('/')
   if split_path.first == '.'
@@ -351,4 +443,22 @@ def apply_plugin_configuration_settings(
   end
 
   return plugin_handle.send(mthod_name)
+end
+
+def create_synced_folder(provisioner_handle, **synced_folder_properties)
+ args = {
+    positional: [
+      synced_folder_properties[:local_path],
+      synced_folder_properties[:remote_path]
+    ],
+    double_splat: {
+      type: synced_folder_properties[:type],
+      disabled: synced_folder_properties[:disabled]
+    }
+  }
+  # If the type isn't specified, we default to using guest customisation...
+    provisioner_handle.synced_folder(
+      *args[:positional],
+      **args[:double_splat]
+    )
 end
